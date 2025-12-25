@@ -1,6 +1,7 @@
 <div
   class="min-h-screen bg-raum-black"
-  x-data="{ selectedSize: null, currentImageIndex: 0, images: {{ product.images.all|length }} }"
+  data-images-count="{{ product.images.all|length }}"
+  x-data="{ selectedSize: null, currentImageIndex: 0, imagesCount: parseInt($el.dataset.imagesCount) || 0 }"
 >
   <!-- Back Button -->
   <div class="px-4 md:px-8 py-4 border-b border-raum-border">
@@ -30,17 +31,20 @@
   </div>
 
   <!-- Product Detail Content -->
-  <div class="flex flex-col lg:flex-row">
+  <div class="flex">
     <!-- Left: Image Gallery -->
     <div
       class="w-full lg:w-2/3 bg-neutral-800 relative group h-[500px] lg:h-screen"
     >
-      {% if product.images.all %} {% for image in product.images.all %}
+      {% if product.images.all %}
+        {% for image in product.images.all %}
       <img
+        {% if not forloop.first %}x-cloak{% endif %}
         x-show="currentImageIndex === {{ forloop.counter0 }}"
         src="{{ image.image.url }}"
         alt="{{ product.name }}"
         class="w-full h-full object-cover absolute inset-0"
+        {% if forloop.first %}style="display: block;"{% endif %}
         x-transition:enter="transition ease-in-out duration-500"
         x-transition:enter-start="opacity-0"
         x-transition:enter-end="opacity-100"
@@ -48,7 +52,8 @@
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
       />
-      {% endfor %} {% endif %}
+        {% endfor %}
+      {% endif %}
 
       <!-- Bottom gradient overlay for thumbnails visibility -->
       <div
@@ -58,7 +63,7 @@
       <!-- Navigation Arrows -->
       {% if product.images.all|length > 1 %}
       <button
-        @click="currentImageIndex = currentImageIndex > 0 ? currentImageIndex - 1 : {{ product.images.all|length|add:'-1' }}"
+        @click="currentImageIndex = currentImageIndex > 0 ? currentImageIndex - 1 : imagesCount - 1"
         class="absolute left-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all"
       >
         <svg
@@ -77,7 +82,7 @@
         </svg>
       </button>
       <button
-        @click="currentImageIndex = currentImageIndex < {{ product.images.all|length|add:'-1' }} ? currentImageIndex + 1 : 0"
+        @click="currentImageIndex = currentImageIndex < imagesCount - 1 ? currentImageIndex + 1 : 0"
         class="absolute right-4 top-1/2 -translate-y-1/2 bg-black/80 hover:bg-black p-3 rounded-full opacity-0 group-hover:opacity-100 transition-all"
       >
         <svg
@@ -152,8 +157,7 @@
         <div class="space-y-1 text-neutral-300">
           {% if product.material %}
           <p>
-            <span class="text-neutral-500">Material:</span> {{ product.material
-            }}
+            <span class="text-neutral-500">Material:</span> {{ product.material}}
           </p>
           {% endif %} {% if product.shape %}
           <p>
@@ -218,9 +222,8 @@
 
         <form
           x-ref="addToCartForm"
-          hx-post="{% url 'catalog:add_to_cart' product.id %}"
-          hx-target="#cart-content"
-          hx-swap="innerHTML"
+          hx-post="{% url 'cart:add' product.id %}"
+          hx-swap="none"
           @htmx:after-request="cartOpen = true"
           style="display: none"
         >

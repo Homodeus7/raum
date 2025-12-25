@@ -1,0 +1,109 @@
+{% if not cart.is_empty %}
+<div class="flex-1 overflow-y-auto divide-y divide-raum-border">
+  {% for item in cart.items %}
+  <div class="p-6 flex space-x-4">
+    <div class="w-24 h-32 bg-neutral-800 overflow-hidden shrink-0">
+      {% if item.product_image_url %}
+      <img
+        src="{{ item.product_image_url }}"
+        alt="{{ item.product_name }}"
+        class="w-full h-full object-cover"
+      />
+      {% endif %}
+    </div>
+    <div class="flex-1 flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-start">
+          <h3 class="text-sm font-bold uppercase w-3/4">
+            {{ item.product_name }}
+          </h3>
+          <span class="text-sm">${{ item.product_price }}</span>
+        </div>
+        <div class="mt-2 text-xs text-neutral-400 uppercase space-y-1">
+          <p>Size: <span class="text-white">{{ item.size }}</span></p>
+          {% if item.product_brand %}
+          <p>Brand: <span class="text-white">{{ item.product_brand }}</span></p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center mt-4">
+        <div class="flex items-center border border-raum-border px-2 py-1 space-x-4">
+          <button
+            hx-post="{% url 'cart:update' item.product_id %}"
+            hx-vals='{"size": "{{ item.size }}", "delta": "-1"}'
+            hx-swap="none"
+            class="hover:text-white text-neutral-500 {% if item.quantity <= 1 %}opacity-30 cursor-not-allowed{% endif %}"
+            {% if item.quantity <= 1 %}disabled{% endif %}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"/>
+            </svg>
+          </button>
+          <span class="text-xs w-4 text-center">{{ item.quantity }}</span>
+          <button
+            hx-post="{% url 'cart:update' item.product_id %}"
+            hx-vals='{"size": "{{ item.size }}", "delta": "1"}'
+            hx-swap="none"
+            class="hover:text-white text-neutral-500"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14"/>
+              <path d="M12 5v14"/>
+            </svg>
+          </button>
+        </div>
+        <button
+          hx-post="{% url 'cart:remove' item.product_id %}"
+          hx-vals='{"size": "{{ item.size }}"}'
+          hx-swap="none"
+          class="text-[10px] uppercase border-b border-transparent hover:border-white transition-colors text-neutral-500 hover:text-white"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="p-6 border-t border-raum-border bg-raum-black mt-auto">
+  <div class="flex justify-between items-center mb-2">
+    <span class="uppercase text-sm tracking-wider">Subtotal:</span>
+    <span class="text-lg font-bold">${{ cart.subtotal }}</span>
+  </div>
+  <p class="text-[10px] text-neutral-500 mb-6">
+    Taxes and shipping calculated at checkout
+  </p>
+  <a
+    href="{% url 'cart:modal' %}"
+    class="block w-full bg-white text-black py-4 uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors text-sm text-center"
+  >
+    Checkout
+  </a>
+</div>
+
+{% else %}
+<div class="flex-1 flex flex-col items-center justify-center text-neutral-500 p-8">
+  <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="mb-4">
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+    <path d="M3 6h18"/>
+    <path d="M16 10a4 4 0 0 1-8 0"/>
+  </svg>
+  <p>Your bag is empty.</p>
+  <button
+    @click="cartOpen = false"
+    class="mt-4 border border-raum-border px-6 py-2 text-xs uppercase tracking-wider hover:bg-white hover:text-black transition-colors"
+  >
+    Continue Shopping
+  </button>
+</div>
+{% endif %}
+
+<script data-cart-count="{{ cart.total_items }}">
+  (function(script) {
+    const count = parseInt(script.dataset.cartCount, 10) || 0;
+    const app = document.getElementById('app');
+    if (app?._x_dataStack) app._x_dataStack[0].cartCount = count;
+  })(document.currentScript);
+</script>

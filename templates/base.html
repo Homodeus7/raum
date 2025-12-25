@@ -34,7 +34,11 @@
   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
+  <meta name="csrf-token" content="{{ csrf_token }}">
+
   <style>
+    [x-cloak] { display: none !important; }
+
     body {
       background-color: #121212;
       color: #f5f5f5;
@@ -78,9 +82,12 @@
     }
   </style>
 </head>
-<body class="bg-raum-black text-white min-h-screen font-sans selection:bg-white selection:text-black">
+<body class="bg-raum-black text-white min-h-screen font-sans selection:bg-white selection:text-black"
+      data-cart-count="{{ cart_count|default:0 }}">
 
-  <div id="app" x-data="{ cartOpen: false, searchOpen: false, cartCount: {{ request.session.cart_count|default:0 }} }" x-effect="document.body.style.overflow = (cartOpen || searchOpen) ? 'hidden' : 'auto'">
+  <div id="app"
+       x-data="{ cartOpen: false, searchOpen: false, cartCount: parseInt(document.body.dataset.cartCount) || 0 }"
+       x-effect="document.body.style.overflow = (cartOpen || searchOpen) ? 'hidden' : 'auto'">
 
     {% include "partials/navbar.html" %}
 
@@ -96,6 +103,13 @@
   </div>
 
   <script>
+    document.body.addEventListener('htmx:configRequest', function(event) {
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+      if (csrfToken) {
+        event.detail.headers['X-CSRFToken'] = csrfToken;
+      }
+    });
+
     document.body.addEventListener('htmx:afterSwap', function(event) {
       if (event.detail.target.id === 'main-content') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -103,9 +117,12 @@
       }
     });
 
-    document.body.addEventListener('cart:updated', function(event) {
-      const newCount = event.detail.count;
-      Alpine.store('cart', { count: newCount });
+    document.body.addEventListener('cartUpdated', function(event) {
+      const count = event.detail.count;
+      const app = document.getElementById('app');
+      if (app && app._x_dataStack) {
+        app._x_dataStack[0].cartCount = count;
+      }
     });
   </script>
 

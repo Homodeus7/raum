@@ -28,10 +28,7 @@ def add_to_cart(request: HttpRequest, product_id: int) -> HttpResponse:
     dto = AddToCartDTO(product_id=product_id, size=size, quantity=quantity)
     cart_dto = service.add_item(dto)
 
-    response = render(request, 'cart/cart_modal_content.html', {
-        'cart': cart_dto,
-    })
-
+    response = HttpResponse('')
     response['HX-Trigger'] = f'{{"cartUpdated": {{"count": {cart_dto.total_items}}}}}'
     return response
 
@@ -53,10 +50,7 @@ def update_cart_item(request: HttpRequest, product_id: int) -> HttpResponse:
     else:
         cart_dto = service.increment_item(product_id, size, delta)
 
-    response = render(request, 'cart/cart_modal_content.html', {
-        'cart': cart_dto,
-    })
-
+    response = HttpResponse('')
     response['HX-Trigger'] = f'{{"cartUpdated": {{"count": {cart_dto.total_items}}}}}'
     return response
 
@@ -71,10 +65,7 @@ def remove_from_cart(request: HttpRequest, product_id: int) -> HttpResponse:
     dto = RemoveFromCartDTO(product_id=product_id, size=size)
     cart_dto = service.remove_item(dto)
 
-    response = render(request, 'cart/cart_modal_content.html', {
-        'cart': cart_dto,
-    })
-
+    response = HttpResponse('')
     response['HX-Trigger'] = f'{{"cartUpdated": {{"count": {cart_dto.total_items}}}}}'
     return response
 
@@ -84,10 +75,7 @@ def clear_cart(request: HttpRequest) -> HttpResponse:
     service = CartService(request)
     cart_dto = service.clear_cart()
 
-    response = render(request, 'cart/cart_modal_content.html', {
-        'cart': cart_dto,
-    })
-
+    response = HttpResponse('')
     response['HX-Trigger'] = '{"cartUpdated": {"count": 0}}'
     return response
 

@@ -1,16 +1,18 @@
 <div
-  x-show="searchOpen"
-  x-cloak
   @keydown.escape.window="searchOpen = false"
-  class="fixed inset-0 z-50 flex items-start justify-center pt-16 md:pt-24"
-  style="display: none;"
+  class="fixed inset-0 z-50 flex items-start justify-center pt-16 md:pt-24 pointer-events-none"
+  :class="searchOpen ? 'pointer-events-auto' : ''"
 >
   <div
     @click="searchOpen = false"
+    x-show="searchOpen"
+    x-cloak
     class="absolute inset-0 bg-black/80 modal-backdrop"
   ></div>
 
   <div
+    x-show="searchOpen"
+    x-cloak
     class="relative w-full max-w-3xl mx-4 bg-raum-dark border border-raum-border rounded-lg modal-content overflow-hidden"
   >
     <div class="p-6">
