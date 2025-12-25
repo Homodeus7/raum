@@ -36,6 +36,8 @@ INSTALLED_APPS = [
 
     'apps.catalog',
     'apps.cart',
+    'apps.orders',
+    'apps.payments',
 ]
 
 MIDDLEWARE = [
@@ -137,3 +139,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+NOWPAYMENTS_API_KEY = config('NOWPAYMENTS_API_KEY', default='')
+NOWPAYMENTS_IPN_SECRET = config('NOWPAYMENTS_IPN_SECRET', default='')
