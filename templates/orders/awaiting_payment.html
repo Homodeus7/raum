@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Awaiting Payment - RAÚM{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 py-16">
+  <div class="max-w-2xl w-full">
+    <div
+      x-data="{
+        status: '{{ payment.status }}',
+        checkInterval: null,
+        checkPaymentStatus() {
+          fetch('{% url 'payments:check_status' order.order_id %}')
+            .then(res => res.json())
+            .then(data => {
+              this.status = data.status;
+              if (['finished', 'confirmed', 'failed', 'expired'].includes(data.status)) {
+                clearInterval(this.checkInterval);
+                if (data.status === 'finished' || data.status === 'confirmed') {
+                  window.location.href = '{% url 'payments:success' order.order_id %}';
+                } else {
+                  window.location.href = '{% url 'payments:failed' order.order_id %}';
+                }
+              }
+            })
+            .catch(err => console.error('Error checking payment status:', err));
+        }
+      }"
+      x-init="checkInterval = setInterval(() => checkPaymentStatus(), 5000)"
+      class="bg-raum-dark border border-raum-border p-8 md:p-12"
+    >
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-20 h-20 border-4 border-yellow-500 rounded-full mb-6">
+          <svg class="animate-spin h-10 w-10 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold uppercase tracking-widest mb-4">Awaiting Payment</h1>
+        <p class="text-neutral-400 text-sm">Please complete your cryptocurrency payment to finalize your order.</p>
+      </div>
+
+      <div class="border border-raum-border bg-raum-black p-6 mb-6">
+        <div class="space-y-4">
+          <div class="flex justify-between items-center pb-3 border-b border-raum-border">
+            <span class="text-xs uppercase tracking-wider text-neutral-400">Order ID:</span>
+            <span class="font-mono text-sm">{{ order.order_id }}</span>
+          </div>
+          <div class="flex justify-between items-center pb-3 border-b border-raum-border">
+            <span class="text-xs uppercase tracking-wider text-neutral-400">Order Total:</span>
+            <span class="text-lg font-bold">${{ order.total }}</span>
+          </div>
+          {% if payment %}
+          <div class="flex justify-between items-center pb-3 border-b border-raum-border">
+            <span class="text-xs uppercase tracking-wider text-neutral-400">Payment Status:</span>
+            <span class="px-3 py-1 bg-yellow-500/20 text-yellow-500 text-xs uppercase tracking-wide font-bold" x-text="status.replace('_', ' ')">
+              {{ payment.get_status_display }}
+            </span>
+          </div>
+          {% if payment.pay_currency %}
+          <div class="flex justify-between items-center">
+            <span class="text-xs uppercase tracking-wider text-neutral-400">Pay Currency:</span>
+            <span class="font-mono text-sm uppercase">{{ payment.pay_currency }}</span>
+          </div>
+          {% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      {% if payment %}
+      <a
+        href="{{ payment.invoice_url }}"
+        target="_blank"
+        class="block w-full bg-white text-black py-4 uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors text-sm text-center mb-4"
+      >
+        Complete Payment
+      </a>
+      {% endif %}
+
+      <div class="text-center">
+        <p class="text-xs text-neutral-500 mb-2">This page will automatically update when payment is confirmed.</p>
+        <p class="text-xs text-neutral-500">
+          Payment processing typically takes 1-10 minutes depending on network conditions.
+        </p>
+      </div>
+
+      <div class="mt-8 pt-6 border-t border-raum-border">
+        <h3 class="text-sm uppercase tracking-wider font-bold mb-4">Order Items:</h3>
+        <div class="space-y-3">
+          {% for item in order.items.all %}
+          <div class="flex justify-between text-sm">
+            <span class="text-neutral-400">{{ item.quantity }}x {{ item.product_name }} ({{ item.size }})</span>
+            <span class="font-bold">${{ item.line_total }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-8">
+      <a
+        href="/"
+        hx-get="/"
+        hx-target="#main-content"
+        hx-swap="innerHTML"
+        hx-push-url="true"
+        class="text-sm uppercase tracking-wider border-b border-transparent hover:border-white transition-colors text-neutral-400 hover:text-white"
+      >
+        Return to Home
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

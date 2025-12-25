@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Failed - RAÚM{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4 py-16">
+  <div class="max-w-2xl w-full">
+    <div class="bg-raum-dark border border-raum-border p-8 md:p-12">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-red-500/20 border-4 border-red-500 rounded-full mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-red-500">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m15 9-6 6"/>
+            <path d="m9 9 6 6"/>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold uppercase tracking-widest mb-4">Payment Failed</h1>
+        <p class="text-neutral-400 text-sm">Unfortunately, your payment could not be processed.</p>
+      </div>
+
+      <div class="border border-raum-border bg-raum-black p-6 mb-6">
+        <div class="space-y-4">
+          <div class="flex justify-between items-center pb-3 border-b border-raum-border">
+            <span class="text-xs uppercase tracking-wider text-neutral-400">Order ID:</span>
+            <span class="font-mono text-sm">{{ order.order_id }}</span>
+          </div>
+          <div class="flex justify-between items-center pb-3 border-b border-raum-border">
+            <span class="text-xs uppercase tracking-wider text-neutral-400">Order Status:</span>
+            <span class="px-3 py-1 bg-red-500/20 text-red-500 text-xs uppercase tracking-wide font-bold">
+              {{ order.get_status_display }}
+            </span>
+          </div>
+          <div class="flex justify-between items-center pb-3 border-b border-raum-border">
+            <span class="text-xs uppercase tracking-wider text-neutral-400">Order Total:</span>
+            <span class="text-lg font-bold">${{ order.total }}</span>
+          </div>
+          {% if payment %}
+          <div class="flex justify-between items-center">
+            <span class="text-xs uppercase tracking-wider text-neutral-400">Payment Status:</span>
+            <span class="px-3 py-1 bg-red-500/20 text-red-500 text-xs uppercase tracking-wide font-bold">
+              {{ payment.get_status_display }}
+            </span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="bg-red-500/10 border border-red-500/30 p-4 mb-6">
+        <div class="flex items-start space-x-3">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-red-500 shrink-0 mt-0.5">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>
+            <path d="M12 9v4"/>
+            <path d="M12 17h.01"/>
+          </svg>
+          <div class="text-xs text-red-400">
+            <p class="font-bold mb-2">What happened?</p>
+            <ul class="text-red-300/80 space-y-1 list-disc list-inside">
+              <li>Payment was not completed within the time limit</li>
+              <li>Insufficient funds or transaction rejected</li>
+              <li>Network issues prevented confirmation</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="border border-raum-border bg-raum-black p-6 mb-8">
+        <h3 class="text-sm uppercase tracking-wider font-bold mb-4">Order Items:</h3>
+        <div class="space-y-3">
+          {% for item in order.items.all %}
+          <div class="flex justify-between text-sm pb-3 border-b border-raum-border last:border-0 last:pb-0">
+            <div>
+              <p class="font-medium">{{ item.product_name }}</p>
+              <p class="text-xs text-neutral-400 mt-1">Size: {{ item.size }} • Qty: {{ item.quantity }}</p>
+            </div>
+            <span class="font-bold">${{ item.line_total }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        {% if payment %}
+        <a
+          href="{{ payment.invoice_url }}"
+          target="_blank"
+          class="block w-full bg-white text-black py-4 uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors text-sm text-center"
+        >
+          Try Payment Again
+        </a>
+        {% endif %}
+        <a
+          href="/"
+          hx-get="/"
+          hx-target="#main-content"
+          hx-swap="innerHTML"
+          hx-push-url="true"
+          class="block w-full border border-raum-border py-4 uppercase font-bold tracking-widest hover:bg-white hover:text-black transition-colors text-sm text-center"
+        >
+          Return to Home
+        </a>
+      </div>
+    </div>
+
+    <div class="text-center mt-8">
+      <p class="text-xs text-neutral-500 mb-2">
+        Need assistance with your payment?
+      </p>
+      <p class="text-xs text-neutral-500">
+        Contact us at support@raum.com with your order ID: <span class="font-mono text-white">{{ order.order_id }}</span>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -76,7 +76,12 @@
     Taxes and shipping calculated at checkout
   </p>
   <a
-    href="{% url 'cart:modal' %}"
+    href="{% url 'orders:checkout' %}"
+    hx-get="{% url 'orders:checkout' %}"
+    hx-target="#main-content"
+    hx-swap="innerHTML"
+    hx-push-url="true"
+    @click="cartOpen = false"
     class="block w-full bg-white text-black py-4 uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors text-sm text-center"
   >
     Checkout

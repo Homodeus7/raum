@@ -6,25 +6,24 @@ from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 
 from apps.cart.models import Cart
+from apps.cart.services import CartService
+from apps.orders.models import Order
+from apps.catalog.utils import is_htmx
 from services.order_service import OrderService
 
 
 @require_http_methods(['GET'])
 def checkout_view(request: HttpRequest) -> HttpResponse:
-    session_key = request.session.session_key
-    if not session_key:
-        return redirect('cart:view')
+    cart_service = CartService(request)
+    cart_dto = cart_service.get_cart_dto()
 
-    try:
-        cart = Cart.objects.prefetch_related('items__product').get(session_key=session_key)
-    except Cart.DoesNotExist:
-        return redirect('cart:view')
-
-    if not cart.items.exists():
-        return redirect('cart:view')
+    if cart_dto.is_empty:
+        if is_htmx(request):
+            return HttpResponse('<div class="text-center py-20"><p class="text-neutral-400">Your cart is empty.</p></div>')
+        return redirect('catalog:product_list')
 
     context = {
-        'cart': cart,
+        'cart': cart_dto,
         'shipping_methods': [
             {'value': 'standard', 'label': 'Standard Shipping', 'cost': Decimal('10.00')},
             {'value': 'express', 'label': 'Express Shipping', 'cost': Decimal('25.00')},
@@ -32,22 +31,24 @@ def checkout_view(request: HttpRequest) -> HttpResponse:
         ],
     }
 
+    if is_htmx(request):
+        return render(request, 'orders/partials/checkout_content.html', context)
+
     return render(request, 'orders/checkout.html', context)
 
 
 @require_POST
 def create_order_view(request: HttpRequest) -> HttpResponse:
-    session_key = request.session.session_key
-    if not session_key:
-        return JsonResponse({'error': 'No cart found'}, status=400)
+    cart_service = CartService(request)
+    cart = cart_service.get_cart()
 
-    try:
-        cart = Cart.objects.prefetch_related('items__product').get(session_key=session_key)
-    except Cart.DoesNotExist:
+    if not cart:
         return JsonResponse({'error': 'Cart not found'}, status=404)
 
     if not cart.items.exists():
         return JsonResponse({'error': 'Cart is empty'}, status=400)
+
+    cart = Cart.objects.prefetch_related('items__product').get(id=cart.id)
 
     customer_info = {
         'email': request.POST.get('email'),
@@ -107,3 +108,15 @@ def order_detail_view(request: HttpRequest, order_id: str) -> HttpResponse:
     }
 
     return render(request, 'orders/order_detail.html', context)
+
+
+@require_http_methods(['GET'])
+def awaiting_payment_view(request: HttpRequest, order_id: str) -> HttpResponse:
+    order = get_object_or_404(Order.objects.select_related('payment').prefetch_related('items'), order_id=order_id)
+
+    context = {
+        'order': order,
+        'payment': getattr(order, 'payment', None),
+    }
+
+    return render(request, 'orders/awaiting_payment.html', context)

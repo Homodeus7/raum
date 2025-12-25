@@ -17,7 +17,7 @@ def create_invoice_view(request: HttpRequest, order_id: str) -> HttpResponse:
     order = get_object_or_404(Order.objects.select_related('payment'), order_id=order_id)
 
     if hasattr(order, 'payment'):
-        return redirect(order.payment.invoice_url)
+        return redirect('orders:awaiting_payment', order_id=order.order_id)
 
     base_url = request.build_absolute_uri('/')[:-1]
     ipn_callback_url = base_url + reverse('payments:webhook')
@@ -32,7 +32,7 @@ def create_invoice_view(request: HttpRequest, order_id: str) -> HttpResponse:
             cancel_url=cancel_url,
         )
 
-        return redirect(invoice_created.invoice_url)
+        return redirect('orders:awaiting_payment', order_id=order.order_id)
 
     except Exception as e:
         logger.error(f"Failed to create invoice for order {order_id}: {str(e)}", exc_info=True)
@@ -108,3 +108,20 @@ def failed_view(request: HttpRequest, order_id: str) -> HttpResponse:
     }
 
     return render(request, 'payments/failed.html', context)
+
+
+@require_http_methods(['GET'])
+def check_payment_status_view(request: HttpRequest, order_id: str) -> HttpResponse:
+    order = get_object_or_404(Order.objects.select_related('payment'), order_id=order_id)
+
+    payment = getattr(order, 'payment', None)
+    if not payment:
+        return JsonResponse({'status': 'no_payment', 'order_status': order.status})
+
+    return JsonResponse({
+        'status': payment.status,
+        'order_status': order.status,
+        'is_successful': payment.is_successful,
+        'is_pending': payment.is_pending,
+        'is_failed': payment.is_failed,
+    })

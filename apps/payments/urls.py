@@ -8,4 +8,5 @@ urlpatterns = [
     path('webhook/', views.webhook_view, name='webhook'),
     path('success/<str:order_id>/', views.success_view, name='success'),
     path('failed/<str:order_id>/', views.failed_view, name='failed'),
+    path('status/<str:order_id>/', views.check_payment_status_view, name='check_status'),
 ]

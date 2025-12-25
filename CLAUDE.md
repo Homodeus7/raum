@@ -13,6 +13,13 @@ E-commerce platform for eyewear frames built with Django, featuring SPA-like beh
 - NOWPayments API for cryptocurrency payments
 - Docker + Nginx for deployment
 
+**Key Dependencies:**
+- `django-htmx`: Middleware for HTMX request detection
+- `python-decouple`: Environment variable management
+- `Pillow`: Image processing for product images
+- `psycopg2-binary`: PostgreSQL adapter
+- `gunicorn`: WSGI HTTP server for production
+
 ## Common Commands
 
 ### Development Setup
@@ -45,6 +52,15 @@ python manage.py makemigrations
 
 # Apply migrations
 python manage.py migrate
+
+# Load test data for catalog
+python manage.py load_fixtures
+
+# Create sample orders (requires products in DB)
+python manage.py create_sample_orders
+
+# Create sample payments (requires orders in DB)
+python manage.py create_sample_payments
 
 # Open Django shell for ORM queries
 python manage.py shell
@@ -99,13 +115,25 @@ This project follows Django's MVT (Model-View-Template) architecture:
 
 Django apps are independent modules in [apps/](apps/):
 
-- **catalog/**: Product catalog (implemented)
-  - Categories, products, product images
-  - Admin interface configured with inline image management
+- **catalog/**: Product catalog
+  - Models: Category, Product, ProductImage
+  - Admin interface with inline image management
+  - Management command: `load_fixtures` for test data
 
-- **cart/**: Shopping cart (planned)
-- **orders/**: Order management (planned)
-- **payments/**: NOWPayments integration (planned)
+- **cart/**: Session-based shopping cart
+  - Models: Cart, CartItem
+  - Service layer with DTOs and Repository pattern
+  - Context processor for cart data in all templates
+
+- **orders/**: Order management
+  - Models: Order, OrderItem
+  - Service layer for order creation from cart
+  - Management command: `create_sample_orders`
+
+- **payments/**: NOWPayments cryptocurrency integration
+  - Models: Payment
+  - Service layer for payment creation and webhook handling
+  - Management command: `create_sample_payments`
 
 Each app contains:
 - `models.py`: Database tables
@@ -147,7 +175,113 @@ categories = Category.objects.prefetch_related('products').all()
 products = Product.objects.prefetch_related('images').all()
 ```
 
-The admin is already optimized (see [apps/catalog/admin.py](apps/catalog/admin.py:95-97)).
+The admin is already optimized (see [apps/catalog/admin.py](apps/catalog/admin.py)).
+
+## Important Implementation Details
+
+### Cart Context Processor
+
+Cart data is available in all templates via context processor ([apps/cart/context_processors.py](apps/cart/context_processors.py)):
+
+```python
+# In settings.py, cart_context is registered
+# In templates, cart is always available:
+{{ cart.total_items }}
+{{ cart.subtotal }}
+```
+
+### HTMX Request Detection
+
+Views can detect HTMX requests and return partial HTML:
+
+```python
+if request.htmx:
+    return render(request, 'partials/content.html', context)
+return render(request, 'full_page.html', context)
+```
+
+The `django-htmx` middleware adds `request.htmx` attribute automatically.
+
+### Session Management
+
+Cart uses Django sessions for anonymous users:
+
+```python
+cart_service = CartService(request)
+cart_service.get_or_create_cart()
+```
+
+Session key is auto-created if it doesn't exist. User carts can be merged with session carts on login.
+
+## Architecture Patterns
+
+This project implements **Clean Architecture** with clear separation of concerns:
+
+### Service Layer Pattern
+
+Business logic is separated into two locations:
+
+**Project-level services** ([services/](services/) at root):
+- **Order Service** ([services/order_service.py](services/order_service.py)): Order creation, status updates
+- **Payment Service** ([services/payment_service.py](services/payment_service.py)): NOWPayments integration
+- DTOs ([services/order_dtos.py](services/order_dtos.py), [services/payment_dtos.py](services/payment_dtos.py)): Data transfer objects
+- Use for cross-app business logic and external integrations
+
+**App-level services** (e.g., [apps/cart/services.py](apps/cart/services.py)):
+- **Cart Service**: Shopping cart operations
+- Use for app-specific business logic
+- Can depend on app repositories and DTOs
+
+### Repository Pattern
+
+Some apps (like cart) use the Repository pattern for data access:
+
+- **CartRepository** ([apps/cart/repositories.py](apps/cart/repositories.py)): Database operations for Cart
+- **CartItemRepository**: Database operations for CartItem
+- Repositories encapsulate all database queries, keeping services clean
+
+### DTO Pattern
+
+Data Transfer Objects ensure type safety and decouple layers:
+
+```python
+@dataclass(frozen=True)
+class CartItemDTO:
+    product_id: int
+    product_name: str
+    product_price: Decimal
+    size: str
+    quantity: int
+```
+
+See [apps/cart/dto.py](apps/cart/dto.py) for examples.
+
+### Service Usage Pattern
+
+Services should be initialized with request context and handle business logic:
+
+```python
+from apps.cart.services import CartService
+from apps.cart.dto import AddToCartDTO
+
+def add_to_cart_view(request, product_id):
+    cart_service = CartService(request)
+
+    dto = AddToCartDTO(
+        product_id=product_id,
+        size=request.POST.get('size', 'M'),
+        quantity=1
+    )
+
+    cart_dto = cart_service.add_item(dto)
+    return render(request, 'cart/cart_content.html', {'cart': cart_dto})
+```
+
+**Key principles:**
+- Services handle business logic and orchestration
+- DTOs ensure type safety and validate data
+- Repositories handle database operations
+- Views only handle HTTP request/response
 
 ## Code Quality Standards
 
@@ -157,7 +291,8 @@ From [tech.md](tech.md):
 - **Type hints required**: Use Python type hints throughout
 - **Clean architecture**: Separate concerns between layers
   - Models: Data structure only
-  - Services layer: Business logic (to be created in services/)
+  - Services: Business logic (in services/ or app services.py)
+  - Repositories: Data access patterns (where applicable)
   - Views: Request/response handling only
 - **DRY principle**: Avoid code duplication
 - **No over-engineering**: Keep solutions minimal and focused
@@ -202,16 +337,26 @@ Fully configured Django admin at `/admin/`:
   - Search by name, brand, description, color
 - Optimized queries using `select_related()` and `prefetch_related()`
 
-## Project Roadmap
+## Project Status
 
-Current status: Models and admin completed for catalog app.
+The core e-commerce functionality is implemented:
 
-Next steps from [BACKEND_GUIDE.md](BACKEND_GUIDE.md):
-1. Create views and URL routing for catalog
-2. Build templates with HTMX for SPA navigation
-3. Implement cart functionality (session-based, no registration required)
-4. Create order management system
-5. Integrate NOWPayments for cryptocurrency payments
+**Completed:**
+- Product catalog with categories and images
+- Session-based shopping cart with Service/Repository pattern
+- Order management with order creation from cart
+- Payment integration with NOWPayments API
+- Admin interface for all models
+- Management commands for test data generation
+- HTMX-powered dynamic UI updates
+
+**Architecture implemented:**
+- Clean Architecture with Service Layer
+- Repository Pattern for data access
+- DTO Pattern for type-safe data transfer
+- Context processors for global template data
+
+See [git status](#) for current working changes and [BACKEND_GUIDE.local.md](BACKEND_GUIDE.local.md) for detailed technical documentation.
 
 ## Docker Stack
 

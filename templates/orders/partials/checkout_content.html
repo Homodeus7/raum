@@ -1,0 +1,314 @@
+<div class="min-h-screen py-16 px-4">
+  <div class="max-w-6xl mx-auto">
+    <div
+      x-data="{
+        step: 'form',
+        formValid: false,
+        shippingMethod: 'standard',
+        shippingCosts: {
+          'standard': '10.00',
+          'express': '25.00',
+          'overnight': '50.00'
+        },
+        validateForm() {
+          const form = this.$refs.checkoutForm;
+          if (!form) return false;
+
+          const requiredFields = ['email', 'first_name', 'last_name', 'phone', 'address_line1', 'city', 'postal_code', 'country'];
+
+          for (const field of requiredFields) {
+            const input = form.querySelector(`[name='${field}']`);
+            if (!input || !input.value.trim()) {
+              return false;
+            }
+          }
+
+          const email = form.querySelector('[name=email]').value;
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            return false;
+          }
+
+          return true;
+        },
+        get subtotal() {
+          return parseFloat('{{ cart.subtotal }}');
+        },
+        get shippingCost() {
+          return parseFloat(this.shippingCosts[this.shippingMethod]);
+        },
+        get total() {
+          return (this.subtotal + this.shippingCost).toFixed(2);
+        }
+      }"
+      x-init="$watch('shippingMethod', () => formValid = validateForm()); setInterval(() => { formValid = validateForm(); }, 500)"
+    >
+      <h1 class="text-3xl font-bold uppercase tracking-widest mb-12 text-center">Checkout</h1>
+
+      <div class="grid grid-cols-2 gap-12">
+        <div class="space-y-8">
+          <form
+            x-ref="checkoutForm"
+            hx-post="{% url 'orders:create' %}"
+            hx-swap="none"
+            @htmx:before-request="step = 'processing'"
+            @htmx:after-request="if ($event.detail.successful) {
+              const response = JSON.parse($event.detail.xhr.response);
+              if (response.redirect_url) {
+                step = 'redirecting';
+                setTimeout(() => window.location.href = response.redirect_url, 500);
+              }
+            } else {
+              step = 'form';
+              alert('Error creating order. Please try again.');
+            }"
+          >
+            {% csrf_token %}
+            <div class="space-y-6">
+              <div>
+                <h2 class="text-xl font-bold uppercase tracking-wider mb-4 pb-2 border-b border-raum-border">Contact Information</h2>
+                <div class="space-y-4">
+                  <div>
+                    <label for="email" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">Email *</label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                      placeholder="your.email@example.com"
+                      @input="formValid = validateForm()"
+                    />
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label for="first_name" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">First Name *</label>
+                      <input
+                        type="text"
+                        id="first_name"
+                        name="first_name"
+                        required
+                        class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                        @input="formValid = validateForm()"
+                      />
+                    </div>
+                    <div>
+                      <label for="last_name" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">Last Name *</label>
+                      <input
+                        type="text"
+                        id="last_name"
+                        name="last_name"
+                        required
+                        class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                        @input="formValid = validateForm()"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label for="phone" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">Phone *</label>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      required
+                      class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                      placeholder="+1 (555) 123-4567"
+                      @input="formValid = validateForm()"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h2 class="text-xl font-bold uppercase tracking-wider mb-4 pb-2 border-b border-raum-border">Shipping Address</h2>
+                <div class="space-y-4">
+                  <div>
+                    <label for="address_line1" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">Address Line 1 *</label>
+                    <input
+                      type="text"
+                      id="address_line1"
+                      name="address_line1"
+                      required
+                      class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                      @input="formValid = validateForm()"
+                    />
+                  </div>
+                  <div>
+                    <label for="address_line2" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">Address Line 2</label>
+                    <input
+                      type="text"
+                      id="address_line2"
+                      name="address_line2"
+                      class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                    />
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label for="city" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">City *</label>
+                      <input
+                        type="text"
+                        id="city"
+                        name="city"
+                        required
+                        class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                        @input="formValid = validateForm()"
+                      />
+                    </div>
+                    <div>
+                      <label for="state" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">State / Province</label>
+                      <input
+                        type="text"
+                        id="state"
+                        name="state"
+                        class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                      />
+                    </div>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <label for="postal_code" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">Postal Code *</label>
+                      <input
+                        type="text"
+                        id="postal_code"
+                        name="postal_code"
+                        required
+                        class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                        @input="formValid = validateForm()"
+                      />
+                    </div>
+                    <div>
+                      <label for="country" class="block text-xs uppercase tracking-wider text-neutral-400 mb-2">Country *</label>
+                      <input
+                        type="text"
+                        id="country"
+                        name="country"
+                        required
+                        class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors"
+                        @input="formValid = validateForm()"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h2 class="text-xl font-bold uppercase tracking-wider mb-4 pb-2 border-b border-raum-border">Shipping Method</h2>
+                <div class="space-y-3">
+                  {% for method in shipping_methods %}
+                  <label class="flex items-center justify-between p-4 border border-raum-border cursor-pointer hover:border-white transition-colors" :class="shippingMethod === '{{ method.value }}' ? 'border-white bg-raum-dark' : ''">
+                    <div class="flex items-center space-x-3">
+                      <input
+                        type="radio"
+                        name="shipping_method"
+                        value="{{ method.value }}"
+                        x-model="shippingMethod"
+                        class="w-4 h-4"
+                        {% if forloop.first %}checked{% endif %}
+                      />
+                      <div>
+                        <div class="text-sm font-medium uppercase tracking-wide">{{ method.label }}</div>
+                        <div class="text-xs text-neutral-500 mt-1">
+                          {% if method.value == 'standard' %}3-5 business days{% endif %}
+                          {% if method.value == 'express' %}1-2 business days{% endif %}
+                          {% if method.value == 'overnight' %}Next business day{% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <span class="text-sm font-bold">${{ method.cost }}</span>
+                  </label>
+                  {% endfor %}
+                </div>
+              </div>
+
+              <div>
+                <h2 class="text-xl font-bold uppercase tracking-wider mb-4 pb-2 border-b border-raum-border">Additional Notes</h2>
+                <textarea
+                  name="notes"
+                  rows="3"
+                  class="w-full bg-raum-dark border border-raum-border px-4 py-3 text-sm focus:outline-none focus:border-white transition-colors resize-none"
+                  placeholder="Any special instructions or notes for your order..."
+                ></textarea>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              :disabled="!formValid || step !== 'form'"
+              class="w-full mt-8 py-4 uppercase font-bold tracking-widest text-sm transition-all"
+              :class="formValid && step === 'form' ? 'bg-white text-black hover:bg-neutral-200 cursor-pointer' : 'bg-neutral-800 text-neutral-600 cursor-not-allowed'"
+            >
+              <span x-show="step === 'form'">Proceed to Payment</span>
+              <span x-show="step === 'processing'" class="flex items-center justify-center space-x-2">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Processing...</span>
+              </span>
+              <span x-show="step === 'redirecting'" class="flex items-center justify-center space-x-2">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Redirecting to payment...</span>
+              </span>
+            </button>
+          </form>
+        </div>
+
+        <div class="sticky top-24 h-fit">
+          <div class="bg-raum-dark border border-raum-border p-6">
+            <h2 class="text-xl font-bold uppercase tracking-wider mb-6 pb-4 border-b border-raum-border">Order Summary</h2>
+
+            <div class="space-y-4 mb-6">
+              {% for item in cart.items %}
+              <div class="flex space-x-4">
+                <div class="w-16 h-20 bg-neutral-800 overflow-hidden shrink-0">
+                  {% if item.product_image_url %}
+                  <img
+                    src="{{ item.product_image_url }}"
+                    alt="{{ item.product_name }}"
+                    class="w-full h-full object-cover"
+                  />
+                  {% endif %}
+                </div>
+                <div class="flex-1">
+                  <h3 class="text-xs font-bold uppercase">{{ item.product_name }}</h3>
+                  <p class="text-xs text-neutral-400 mt-1">Size: {{ item.size }}</p>
+                  <p class="text-xs text-neutral-400">Qty: {{ item.quantity }}</p>
+                </div>
+                <div class="text-sm font-bold">${{ item.line_total }}</div>
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="space-y-3 pt-4 border-t border-raum-border">
+              <div class="flex justify-between text-sm">
+                <span class="text-neutral-400 uppercase tracking-wide">Subtotal:</span>
+                <span class="font-bold">${{ cart.subtotal }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-neutral-400 uppercase tracking-wide">Shipping:</span>
+                <span class="font-bold" x-text="'$' + shippingCost.toFixed(2)"></span>
+              </div>
+              <div class="flex justify-between text-lg pt-3 border-t border-raum-border">
+                <span class="uppercase tracking-wider font-bold">Total:</span>
+                <span class="font-bold" x-text="'$' + total"></span>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-6 border-t border-raum-border">
+              <div class="flex items-start space-x-2 text-xs text-neutral-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-0.5">
+                  <rect width="20" height="14" x="2" y="5" rx="2"/>
+                  <path d="M2 10h20"/>
+                </svg>
+                <p>Secure cryptocurrency payment powered by NOWPayments</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

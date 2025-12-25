@@ -32,7 +32,8 @@
   </script>
 
   <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
   <meta name="csrf-token" content="{{ csrf_token }}">
 
@@ -103,6 +104,20 @@
   </div>
 
   <script>
+    function initializeAlpineInElement(element) {
+      if (window.Alpine) {
+        setTimeout(() => {
+          Alpine.initTree(element);
+        }, 50);
+      } else {
+        document.addEventListener('alpine:init', () => {
+          setTimeout(() => {
+            Alpine.initTree(element);
+          }, 50);
+        });
+      }
+    }
+
     document.body.addEventListener('htmx:configRequest', function(event) {
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
       if (csrfToken) {
@@ -110,10 +125,24 @@
       }
     });
 
+    document.body.addEventListener('htmx:beforeSwap', function(event) {
+      if (event.detail.target.id === 'main-content') {
+        if (window.Alpine) {
+          try {
+            Alpine.destroyTree(event.detail.target);
+          } catch (e) {
+            console.debug('Alpine cleanup skipped:', e);
+          }
+        }
+      }
+    });
+
     document.body.addEventListener('htmx:afterSwap', function(event) {
       if (event.detail.target.id === 'main-content') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         document.body.style.overflow = 'auto';
+
+        initializeAlpineInElement(event.detail.target);
       }
     });
 
