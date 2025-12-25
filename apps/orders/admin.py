@@ -1,16 +1,14 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import Order, OrderItem
+from apps.payments.models import Payment
 
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
-    extra = 0
-    readonly_fields = ['product_name', 'product_slug', 'product_price', 'size', 'quantity', 'line_total']
-    can_delete = False
-
-    def has_add_permission(self, request, obj=None):
-        return False
+    extra = 1
+    fields = ['product_name', 'product_slug', 'product_price', 'size', 'quantity', 'line_total']
+    readonly_fields = ['line_total']
 
 
 @admin.register(Order)
@@ -31,12 +29,13 @@ class OrderAdmin(admin.ModelAdmin):
         'updated_at',
         'customer_full_name',
         'full_shipping_address',
+        'payment_info',
     ]
     inlines = [OrderItemInline]
 
     fieldsets = [
         ('Order Information', {
-            'fields': ['order_id', 'status', 'created_at', 'updated_at'],
+            'fields': ['order_id', 'status', 'created_at', 'updated_at', 'payment_info'],
         }),
         ('Customer Information', {
             'fields': [
@@ -87,6 +86,46 @@ class OrderAdmin(admin.ModelAdmin):
             obj.get_status_display()
         )
     status_badge.short_description = 'Status'
+
+    def payment_info(self, obj):
+        from django.urls import reverse
+        try:
+            payment = obj.payment
+            url = reverse('admin:payments_payment_change', args=[payment.id])
+
+            status_colors = {
+                'waiting': '#6c757d',
+                'confirming': '#0dcaf0',
+                'confirmed': '#198754',
+                'sending': '#0d6efd',
+                'partially_paid': '#ffc107',
+                'finished': '#20c997',
+                'failed': '#dc3545',
+                'refunded': '#fd7e14',
+                'expired': '#6c757d',
+            }
+            color = status_colors.get(payment.status, '#6c757d')
+
+            return format_html(
+                '<div style="margin-bottom: 10px;">'
+                '<strong>Payment ID:</strong> <a href="{}" target="_blank">{}</a><br>'
+                '<strong>Invoice ID:</strong> {}<br>'
+                '<strong>Status:</strong> <span style="background-color: {}; color: white; padding: 2px 8px; border-radius: 3px;">{}</span><br>'
+                '<strong>Amount:</strong> {} {}<br>'
+                '<strong>Pay Currency:</strong> {}'
+                '</div>',
+                url,
+                payment.nowpayments_payment_id or 'N/A',
+                payment.nowpayments_invoice_id,
+                color,
+                payment.get_status_display(),
+                payment.price_amount,
+                payment.price_currency.upper(),
+                payment.pay_currency.upper() if payment.pay_currency else 'N/A'
+            )
+        except Payment.DoesNotExist:
+            return format_html('<em style="color: #999;">No payment associated</em>')
+    payment_info.short_description = 'Payment Information'
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('payment').prefetch_related('items')
