@@ -1,0 +1,89 @@
+{% if query %}
+  {% if products %}
+    <div class="grid gap-4">
+      {% for product in products %}
+        <a
+          href="{% url 'catalog:product_detail' product.slug %}"
+          hx-get="{% url 'catalog:product_detail' product.slug %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML show:top"
+          hx-push-url="true"
+          @click="searchOpen = false"
+          class="flex gap-4 p-3 hover:bg-raum-black rounded transition-colors group"
+        >
+          {% if product.main_image %}
+            <div class="w-20 h-20 flex-shrink-0 bg-raum-black rounded overflow-hidden">
+              <img
+                src="{{ product.main_image.image.url }}"
+                alt="{{ product.name }}"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            </div>
+          {% else %}
+            <div class="w-20 h-20 flex-shrink-0 bg-raum-black rounded flex items-center justify-center">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1"
+                class="text-neutral-600"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+            </div>
+          {% endif %}
+
+          <div class="flex-1 min-w-0">
+            <h3 class="font-medium text-white truncate group-hover:text-neutral-300 transition-colors">
+              {{ product.name }}
+            </h3>
+            {% if product.brand %}
+              <p class="text-sm text-neutral-500 truncate">{{ product.brand }}</p>
+            {% endif %}
+            <p class="text-sm text-white mt-1">${{ product.price }}</p>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-12 text-neutral-500">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+        class="mx-auto mb-4 opacity-50"
+      >
+        <circle cx="11" cy="11" r="8" />
+        <path d="m21 21-4.3-4.3" />
+      </svg>
+      <p class="text-sm uppercase tracking-wider">No products found</p>
+      <p class="text-xs mt-2">Try a different search term</p>
+    </div>
+  {% endif %}
+{% else %}
+  <div class="text-center py-12 text-neutral-500">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="48"
+      height="48"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1"
+      class="mx-auto mb-4 opacity-50"
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+    <p class="text-sm uppercase tracking-wider">Start typing to search</p>
+  </div>
+{% endif %}

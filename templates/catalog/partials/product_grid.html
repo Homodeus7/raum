@@ -1,0 +1,79 @@
+<div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border-l border-t border-raum-border">
+  {% for product in products %}
+  <div
+    hx-get="{% url 'catalog:product_detail' product.slug %}"
+    hx-target="#main-content"
+    hx-swap="innerHTML show:top"
+    hx-push-url="true"
+    class="group relative border-r border-b border-raum-border block overflow-hidden cursor-pointer">
+
+    <!-- Image Container -->
+    <div class="aspect-[3/4] overflow-hidden bg-neutral-800">
+      {% if product.main_image %}
+      <img
+        src="{{ product.main_image.image.url }}"
+        alt="{{ product.name }}"
+        class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+        loading="lazy"
+      />
+      {% endif %}
+      {% if product.collection %}
+      <span class="absolute top-4 right-4 border border-black/10 bg-white/50 backdrop-blur-md text-black px-2 py-1 text-[10px] uppercase tracking-wider">
+        New in
+      </span>
+      {% endif %}
+    </div>
+
+    <!-- Quick View Overlay -->
+    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex justify-between items-end translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+      <span class="text-xs uppercase tracking-wider font-bold">Quick View</span>
+    </div>
+
+    <!-- Static Info -->
+    <div class="absolute bottom-0 w-full bg-raum-black/90 p-3 flex justify-between items-center text-[10px] md:text-xs uppercase tracking-wide border-t border-white/10">
+      <span class="font-bold truncate pr-2">{{ product.name }}</span>
+      <span>${{ product.price }}</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if products.has_other_pages %}
+<div class="py-12 flex justify-center items-center space-x-4 text-xs text-neutral-500 uppercase tracking-widest">
+  {% if products.has_previous %}
+  <span
+    hx-get="?page={{ products.previous_page_number }}{% if selected_category %}&category={{ selected_category.slug }}{% endif %}{{ request.GET.urlencode }}"
+    hx-target="#product-grid"
+    hx-swap="outerHTML"
+    hx-push-url="true"
+    class="cursor-pointer hover:text-white">&lt;</span>
+  {% else %}
+  <span>&lt;</span>
+  {% endif %}
+
+  {% for num in products.paginator.page_range %}
+  {% if num == products.number %}
+  <span class="text-white border-b border-white">{{ num }}</span>
+  {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+  <span
+    hx-get="?page={{ num }}{% if selected_category %}&category={{ selected_category.slug }}{% endif %}{{ request.GET.urlencode }}"
+    hx-target="#product-grid"
+    hx-swap="outerHTML"
+    hx-push-url="true"
+    class="hover:text-white cursor-pointer">{{ num }}</span>
+  {% endif %}
+  {% endfor %}
+
+  {% if products.has_next %}
+  <span
+    hx-get="?page={{ products.next_page_number }}{% if selected_category %}&category={{ selected_category.slug }}{% endif %}{{ request.GET.urlencode }}"
+    hx-target="#product-grid"
+    hx-swap="outerHTML"
+    hx-push-url="true"
+    class="cursor-pointer hover:text-white">&gt;</span>
+  {% else %}
+  <span>&gt;</span>
+  {% endif %}
+</div>
+{% endif %}

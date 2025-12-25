@@ -1,0 +1,164 @@
+{% if cart_items %}
+<!-- Items -->
+<div class="divide-y divide-raum-border">
+  {% for item in cart_items %}
+  <div class="p-6 flex space-x-4">
+    <div class="w-24 h-32 bg-neutral-800 overflow-hidden shrink-0">
+      {% if item.product.images.all %} {% with
+      main_image=item.product.images.all|first %}
+      <img
+        src="{{ main_image.image.url }}"
+        alt="{{ item.product.name }}"
+        class="w-full h-full object-cover"
+      />
+      {% endwith %} {% endif %}
+    </div>
+    <div class="flex-1 flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-start">
+          <h3 class="text-sm font-bold uppercase w-3/4">
+            {{ item.product.name }}
+          </h3>
+          <span class="text-sm">${{ item.product.price }}</span>
+        </div>
+        <div class="mt-2 text-xs text-neutral-400 uppercase space-y-1">
+          <p>Size: <span class="text-white">{{ item.size }}</span></p>
+          <p>
+            Colour:
+            <span class="text-white"
+              >{{ item.product.color|default:"Black" }}</span
+            >
+          </p>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center mt-4">
+        <div
+          class="flex items-center border border-raum-border px-2 py-1 space-x-4"
+        >
+          <button
+            hx-post="{% url 'catalog:update_cart_item' item.product.id %}"
+            hx-vals='{"size": "{{ item.size }}", "delta": "-1"}'
+            hx-target="#cart-content"
+            hx-swap="innerHTML"
+            class="hover:text-white text-neutral-500 {% if item.quantity <= 1 %}opacity-30 cursor-not-allowed{% endif %}"
+            {%
+            if
+            item.quantity
+            <="1"
+            %}disabled{%
+            endif
+            %}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M5 12h14" />
+            </svg>
+          </button>
+          <span class="text-xs w-4 text-center">{{ item.quantity }}</span>
+          <button
+            hx-post="{% url 'catalog:update_cart_item' item.product.id %}"
+            hx-vals='{"size": "{{ item.size }}", "delta": "1"}'
+            hx-target="#cart-content"
+            hx-swap="innerHTML"
+            class="hover:text-white text-neutral-500"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="10"
+              height="10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M5 12h14" />
+              <path d="M12 5v14" />
+            </svg>
+          </button>
+        </div>
+        <button
+          hx-post="{% url 'catalog:remove_from_cart' item.product.id %}"
+          hx-vals='{"size": "{{ item.size }}"}'
+          hx-target="#cart-content"
+          hx-swap="innerHTML"
+          class="text-[10px] uppercase border-b border-transparent hover:border-white transition-colors text-neutral-500 hover:text-white"
+        >
+          Remove
+        </button>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Footer -->
+<div class="p-6 border-t border-raum-border bg-raum-black">
+  <div class="flex justify-between items-center mb-2">
+    <span class="uppercase text-sm tracking-wider">Subtotal:</span>
+    <span class="text-lg font-bold">${{ cart_subtotal }}</span>
+  </div>
+  <p class="text-[10px] text-neutral-500 mb-6">
+    Taxes and shipping calculated at checkout
+  </p>
+  <button
+    class="w-full bg-white text-black py-4 uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors text-sm"
+  >
+    Checkout
+  </button>
+</div>
+
+{% else %}
+<!-- Empty Cart -->
+<div
+  class="h-full flex flex-col items-center justify-center text-neutral-500 p-8"
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="48"
+    height="48"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class="mb-4"
+  >
+    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+    <path d="M3 6h18" />
+    <path d="M16 10a4 4 0 0 1-8 0" />
+  </svg>
+  <p>Your bag is empty.</p>
+  <button
+    @click="cartOpen = false"
+    class="mt-4 border border-raum-border px-6 py-2 text-xs uppercase tracking-wider hover:bg-white hover:text-black transition-colors"
+  >
+    Continue Shopping
+  </button>
+</div>
+{% endif %}
+
+<!-- Update cart count in Alpine.js store -->
+<script data-cart-count="{{ cart_count }}">
+    (function() {
+        const scriptTag = document.currentScript;
+        const cartCount = parseInt(scriptTag.getAttribute('data-cart-count'), 10);
+        document.dispatchEvent(new CustomEvent('cart:count-updated', { detail: { count: cartCount } }));
+        const app = document.querySelector('[x-data]');
+        if (app && app.__x) {
+            app.__x.$data.cartCount = cartCount;
+        }
+    })();
+</script>

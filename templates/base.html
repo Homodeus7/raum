@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}RAÚM - Fashion{% endblock %}</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            raum: {
+              black: '#121212',
+              dark: '#1a1a1a',
+              border: '#333333',
+              light: '#f5f5f5',
+              accent: '#4a4a4a'
+            }
+          },
+          fontFamily: {
+            sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
+          },
+          letterSpacing: {
+            widest: '.15em',
+          }
+        }
+      }
+    }
+  </script>
+
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    body {
+      background-color: #121212;
+      color: #f5f5f5;
+      overflow-x: hidden;
+      transition: overflow 0.1s;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121212;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+    }
+
+    .modal-backdrop {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .modal-content {
+      animation: slideInRight 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    .htmx-swapping {
+      opacity: 0;
+      transition: opacity 200ms ease-out;
+    }
+
+    .htmx-settling {
+      opacity: 1;
+      transition: opacity 200ms ease-in;
+    }
+  </style>
+</head>
+<body class="bg-raum-black text-white min-h-screen font-sans selection:bg-white selection:text-black">
+
+  <div id="app" x-data="{ cartOpen: false, searchOpen: false, cartCount: {{ request.session.cart_count|default:0 }} }" x-effect="document.body.style.overflow = (cartOpen || searchOpen) ? 'hidden' : 'auto'">
+
+    {% include "partials/navbar.html" %}
+
+    <main id="main-content">
+      {% block content %}{% endblock %}
+    </main>
+
+    {% include "partials/footer.html" %}
+
+    {% include "partials/cart_modal.html" %}
+    {% include "partials/search_modal.html" %}
+
+  </div>
+
+  <script>
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+      if (event.detail.target.id === 'main-content') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.body.style.overflow = 'auto';
+      }
+    });
+
+    document.body.addEventListener('cart:updated', function(event) {
+      const newCount = event.detail.count;
+      Alpine.store('cart', { count: newCount });
+    });
+  </script>
+
+</body>
+</html>

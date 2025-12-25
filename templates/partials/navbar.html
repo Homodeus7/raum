@@ -1,0 +1,75 @@
+<!-- Navbar -->
+<nav
+  class="sticky top-0 z-40 bg-raum-black border-b border-raum-border text-xs font-medium uppercase tracking-wider"
+>
+  <div class="flex justify-between items-center h-14 px-4 md:px-8">
+    <!-- Logo Section -->
+    <div class="flex-1 flex items-center">
+      <a
+        href="{% url 'catalog:product_list' %}"
+        hx-get="{% url 'catalog:product_list' %}"
+        hx-target="#main-content"
+        hx-swap="innerHTML show:top"
+        hx-push-url="true"
+        class="text-2xl font-bold tracking-tighter text-white mr-12"
+      >
+        RAÚM
+      </a>
+      <div class="hidden md:flex space-x-8 text-neutral-400">
+        <a
+          href="{% url 'catalog:product_list' %}"
+          hx-get="{% url 'catalog:product_list' %}"
+          hx-target="#main-content"
+          hx-swap="innerHTML show:top"
+          hx-push-url="true"
+          class="hover:text-white transition-colors"
+          >Shop</a
+        >
+        <a href="#" class="hover:text-white transition-colors">Collections</a>
+        <a href="#" class="hover:text-white transition-colors">About</a>
+      </div>
+    </div>
+
+    <!-- Right Actions -->
+    <div class="flex items-center space-x-6 md:space-x-8 text-neutral-400">
+      <div
+        @click="searchOpen = true"
+        class="flex items-center space-x-2 cursor-pointer hover:text-white group"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <span class="hidden md:inline">Search</span>
+      </div>
+
+      <div
+        class="hidden md:flex items-center space-x-2 cursor-pointer hover:text-white"
+      >
+        <span class="uppercase">Account</span>
+      </div>
+
+      <div
+        @click="cartOpen = true"
+        class="flex items-center space-x-1 cursor-pointer hover:text-white text-white"
+      >
+        <span>BAG</span>
+        <span
+          x-show="cartCount > 0"
+          x-text="'[' + cartCount + ']'"
+          class="ml-1"
+        ></span>
+      </div>
+    </div>
+  </div>
+</nav>

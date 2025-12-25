@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAÚM - Fashion</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            raum: {
+              black: '#121212',
+              dark: '#1a1a1a',
+              border: '#333333',
+              light: '#f5f5f5',
+              accent: '#4a4a4a'
+            }
+          },
+          fontFamily: {
+            sans: ['Helvetica Neue', 'Arial', 'sans-serif'],
+          },
+          letterSpacing: {
+            widest: '.15em',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Custom Styles -->
+  <style>
+    body {
+      background-color: #121212;
+      color: #f5f5f5;
+      overflow-x: hidden;
+    }
+
+    /* Hide scrollbar for clean aesthetic */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #121212;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+    }
+
+    /* Modal animations */
+    .modal-backdrop {
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .modal-content {
+      animation: slideInRight 0.3s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100%); }
+      to { transform: translateX(0); }
+    }
+
+    /* Cart drawer animations */
+    .cart-open {
+      transform: translateX(0);
+    }
+    .cart-closed {
+      transform: translateX(100%);
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="bg-raum-black text-white min-h-screen font-sans selection:bg-white selection:text-black">
+
+    <!-- NAVBAR -->
+    <nav id="navbar"></nav>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content"></main>
+
+    <!-- FOOTER -->
+    <footer id="footer"></footer>
+
+    <!-- CART DRAWER (Initially hidden) -->
+    <div id="cart-drawer"></div>
+
+  </div>
+
+  <!-- Icons Module -->
+  <script>
+// icons.js - SVG Icons Module
+// Замена lucide-react иконок на чистый SVG
+
+const Icons = {
+  // Search icon (14x14)
+  Search: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>`,
+
+  // ShoppingBag icon (16x16)
+  ShoppingBag: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>`,
+
+  // User icon (16x16)
+  User: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`,
+
+  // X (Close) icon (16x16)
+  X: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>`,
+
+  // Plus icon (10x10)
+  Plus: `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>`,
+
+  // Minus icon (10x10)
+  Minus: `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>`,
+
+  // Filter icon (14x14)
+  Filter: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>`,
+
+  // ArrowLeft icon (32x32)
+  ArrowLeft: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>`,
+
+  // ArrowRight icon (32x32)
+  ArrowRight: `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>`,
+
+  // Heart icon (14x14)
+  Heart: `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`
+};
+  </script>
+
+  <!-- Main App -->
+  <script>
+// ============================================
+// RAÚM FASHION - Static HTML Version
+// ============================================
+
+// ============================================
+// 1. ДАННЫЕ (из constants.ts)
+// ============================================
+
+const PRODUCTS = [
+  {
+    id: '1',
+    name: 'Mavis Oversized Trench',
+    price: 345.00,
+    category: 'Outerwear',
+    image: 'https://picsum.photos/seed/fashion1/800/1000',
+    description: 'Classic oversized trench coat featuring a double-breasted closure and adjustable belt.'
+  },
+  {
+    id: '2',
+    name: 'Naica Leather Jacket',
+    price: 285.00,
+    category: 'Jackets',
+    isNew: true,
+    image: 'https://picsum.photos/seed/fashion2/800/1000',
+    description: 'Premium faux leather jacket with a boxy fit and silver hardware detailing.'
+  },
+  {
+    id: '3',
+    name: 'Arlise Trench Coat',
+    price: 325.00,
+    category: 'Outerwear',
+    image: 'https://picsum.photos/seed/fashion3/800/1000',
+    description: 'Beige structured trench coat tailored for a modern silhouette.'
+  },
+  {
+    id: '4',
+    name: 'Arbor Leather Jacket',
+    price: 275.00,
+    category: 'Jackets',
+    image: 'https://picsum.photos/seed/fashion4/800/1000',
+    description: 'Distressed leather jacket with vintage finish.'
+  },
+  {
+    id: '5',
+    name: 'Prilly Oversized Shirt',
+    price: 169.00,
+    category: 'Tops',
+    image: 'https://picsum.photos/seed/fashion5/800/1000',
+    description: 'Crisp cotton shirt with dropped shoulders and elongated cuffs.'
+  },
+  {
+    id: '6',
+    name: 'Beaufille Baes Crop Top',
+    price: 470.00,
+    category: 'Tops',
+    image: 'https://picsum.photos/seed/fashion6/800/1000',
+    description: 'Avant-garde crop top with integrated gloves in a glossy finish.'
+  },
+  {
+    id: '7',
+    name: 'Rotate Oversized T-Shirt',
+    price: 90.00,
+    category: 'Tops',
+    image: 'https://picsum.photos/seed/fashion7/800/1000',
+    description: 'Basic logo tee with a relaxed streetwear fit.'
+  },
+  {
+    id: '8',
+    name: 'Pelso Barn Jacket',
+    price: 295.00,
+    category: 'Outerwear',
+    isNew: true,
+    image: 'https://picsum.photos/seed/fashion8/800/1000',
+    description: 'Workwear-inspired jacket crafted from durable canvas.'
+  },
+  {
+    id: '9',
+    name: 'Peoria Suede Blazer',
+    price: 278.00,
+    category: 'Blazers',
+    image: 'https://picsum.photos/seed/fashion9/800/1000',
+    description: 'Soft suede blazer in a rich brown earth tone.'
+  },
+  {
+    id: '10',
+    name: 'Iva Blazer',
+    price: 489.00,
+    category: 'Blazers',
+    image: 'https://picsum.photos/seed/fashion10/800/1000',
+    description: 'Structured wool blazer with sharp shoulders.'
+  },
+  {
+    id: '11',
+    name: 'Rafaela Knit Sweater',
+    price: 277.00,
+    category: 'Knitwear',
+    image: 'https://picsum.photos/seed/fashion11/800/1000',
+    description: 'Charcoal grey knit sweater with a crew neck.'
+  },
+  {
+    id: '12',
+    name: 'JW Anderson Jumper',
+    price: 790.00,
+    category: 'Knitwear',
+    image: 'https://picsum.photos/seed/fashion12/800/1000',
+    description: 'Luxury wool blend jumper with unique knot detailing.'
+  }
+];
+
+const SIZES = ['XS', 'S', 'M', 'L', 'XL'];
+
+// ============================================
+// 2. СОСТОЯНИЕ ПРИЛОЖЕНИЯ
+// ============================================
+
+const AppState = {
+  cart: [],
+  isCartOpen: false,
+  currentFilter: 'All',
+  searchQuery: '',
+  selectedProduct: null,
+  selectedSizeInModal: null,
+  currentRoute: 'catalog', // 'catalog' | 'product'
+  currentProductId: null
+};
+
+// ============================================
+// 3. ФУНКЦИИ УПРАВЛЕНИЯ КОРЗИНОЙ
+// ============================================
+
+function addToCart(product, selectedSize) {
+  const existingItem = AppState.cart.find(
+    item => item.id === product.id && item.selectedSize === selectedSize
+  );
+
+  if (existingItem) {
+    existingItem.quantity += 1;
+  } else {
+    AppState.cart.push({
+      ...product,
+      selectedSize,
+      quantity: 1
+    });
+  }
+
+  saveCartToStorage();
+  updateCartUI();
+  openCart();
+}
+
+function removeFromCart(itemId, size) {
+  AppState.cart = AppState.cart.filter(
+    item => !(item.id === itemId && item.selectedSize === size)
+  );
+  saveCartToStorage();
+  updateCartUI();
+}
+
+function updateQuantity(itemId, size, delta) {
+  const item = AppState.cart.find(
+    i => i.id === itemId && i.selectedSize === size
+  );
+  if (item) {
+    item.quantity = Math.max(1, item.quantity + delta);
+    saveCartToStorage();
+    updateCartUI();
+  }
+}
+
+function getCartCount() {
+  return AppState.cart.reduce((sum, item) => sum + item.quantity, 0);
+}
+
+function getCartSubtotal() {
+  return AppState.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}
+
+function saveCartToStorage() {
+  localStorage.setItem('raum-cart', JSON.stringify(AppState.cart));
+}
+
+function loadCartFromStorage() {
+  const saved = localStorage.getItem('raum-cart');
+  if (saved) {
+    try {
+      AppState.cart = JSON.parse(saved);
+    } catch (e) {
+      AppState.cart = [];
+    }
+  }
+}
+
+// ============================================
+// 4. ФУНКЦИИ UI - NAVBAR
+// ============================================
+
+function renderNavbar() {
+  const navbar = document.getElementById('navbar');
+  const cartCount = getCartCount();
+
+  navbar.innerHTML = `
+    <div class="sticky top-0 z-40 bg-raum-black border-b border-raum-border text-xs font-medium uppercase tracking-wider">
+      <div class="flex justify-between items-center h-14 px-4 md:px-8">
+
+        <!-- Logo Section -->
+        <div class="flex-1 flex items-center">
+          <a href="#" class="text-2xl font-bold tracking-tighter text-white mr-12" onclick="navigateHome(event)">RAÚM</a>
+          <div class="hidden md:flex space-x-8 text-neutral-400">
+            <a href="#" class="hover:text-white transition-colors">Shop</a>
+            <a href="#" class="hover:text-white transition-colors">Collections</a>
+            <a href="#" class="hover:text-white transition-colors">About</a>
+          </div>
+        </div>
+
+        <!-- Right Actions -->
+        <div class="flex items-center space-x-6 md:space-x-8 text-neutral-400">
+          <span class="hidden md:inline hover:text-white cursor-pointer">[ DARK / <span class="text-neutral-600">LIGHT</span> ]</span>
+          <div class="flex items-center space-x-2 cursor-pointer hover:text-white group" onclick="handleSearch()">
+            ${Icons.Search}
+            <span class="hidden md:inline">Search</span>
+          </div>
+          <div class="hidden md:flex items-center space-x-2 cursor-pointer hover:text-white">
+            <span class="uppercase">Account</span>
+          </div>
+          <div onclick="openCart()" class="flex items-center space-x-1 cursor-pointer hover:text-white text-white">
+            <span>BAG</span>
+            ${cartCount > 0 ? `<span class="ml-1">[${cartCount}]</span>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================
+// 5. ФУНКЦИИ UI - CATALOG
+// ============================================
+
+function renderCatalog() {
+  const mainContent = document.getElementById('main-content');
+  const filteredProducts = getFilteredProducts();
+
+  mainContent.innerHTML = `
+    <div class="min-h-screen bg-raum-black">
+      <!-- Page Header -->
+      <div class="px-4 md:px-8 py-8 md:py-12 border-b border-raum-border">
+        <h1 class="text-xl md:text-2xl uppercase tracking-wide">All Clothing</h1>
+      </div>
+
+      <!-- Filter Bar -->
+      <div class="sticky top-14 z-30 bg-raum-black border-b border-raum-border flex justify-between items-center px-4 md:px-8 py-3 text-[10px] md:text-xs uppercase tracking-widest text-neutral-400">
+        <div class="flex flex-wrap gap-2 md:gap-4 overflow-x-auto no-scrollbar">
+          ${renderFilterButtons()}
+        </div>
+        <div class="flex items-center cursor-pointer hover:text-white pl-4 bg-raum-black">
+          <span>Filter & Sort</span>
+          ${Icons.Plus}
+        </div>
+      </div>
+
+      <!-- Product Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border-l border-t border-raum-border">
+        ${renderProductGrid(filteredProducts)}
+      </div>
+
+      <!-- Pagination -->
+      ${renderPagination()}
+
+      <!-- View More Button -->
+      <div class="flex justify-center pb-12">
+        <button class="border border-raum-border px-8 py-3 text-xs uppercase tracking-widest hover:bg-white hover:text-black transition-colors">
+          View More Items
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderFilterButtons() {
+  const categories = ['All', 'Outerwear', 'Knitwear', 'Tops', 'Jackets', 'Blazers'];
+  return categories.map(cat => {
+    const isActive = AppState.currentFilter === cat;
+    return `
+      <span
+        onclick="setFilter('${cat}')"
+        class="${isActive ? 'text-white border-b border-white' : 'hover:text-white'} cursor-pointer transition-colors"
+      >
+        ${cat}
+      </span>
+    `;
+  }).join('');
+}
+
+function renderProductGrid(products) {
+  return products.map(product => `
+    <div
+      onclick="navigateToProduct('${product.id}')"
+      class="group relative border-r border-b border-raum-border block overflow-hidden cursor-pointer"
+    >
+      <!-- Image Container -->
+      <div class="aspect-[3/4] overflow-hidden bg-neutral-800">
+        <img
+          src="${product.image}"
+          alt="${product.name}"
+          class="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          loading="lazy"
+        />
+        ${product.isNew ? `
+          <span class="absolute top-4 right-4 border border-black/10 bg-white/50 backdrop-blur-md text-black px-2 py-1 text-[10px] uppercase tracking-wider">
+            New in
+          </span>
+        ` : ''}
+      </div>
+
+      <!-- Quick View Overlay -->
+      <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 flex justify-between items-end translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+        <span class="text-xs uppercase tracking-wider font-bold">Quick View</span>
+      </div>
+
+      <!-- Static Info -->
+      <div class="absolute bottom-0 w-full bg-raum-black/90 p-3 flex justify-between items-center text-[10px] md:text-xs uppercase tracking-wide border-t border-white/10">
+        <span class="font-bold truncate pr-2">${product.name}</span>
+        <span>$${product.price.toFixed(2)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPagination() {
+  return `
+    <div class="py-12 flex justify-center items-center space-x-4 text-xs text-neutral-500 uppercase tracking-widest">
+      <span>&lt;</span>
+      <span class="text-white border-b border-white">1</span>
+      <span class="hover:text-white cursor-pointer">2</span>
+      <span class="hover:text-white cursor-pointer">3</span>
+      <span>...</span>
+      <span class="hover:text-white cursor-pointer">7</span>
+      <span>&gt;</span>
+    </div>
+  `;
+}
+
+// ============================================
+// 6. ФУНКЦИИ UI - PRODUCT PAGE
+// ============================================
+
+function renderProductPage(productId) {
+  const product = PRODUCTS.find(p => p.id === productId);
+  if (!product) {
+    navigateToCatalog();
+    return;
+  }
+
+  AppState.selectedProduct = product;
+  AppState.selectedSizeInModal = null;
+  const mainContent = document.getElementById('main-content');
+
+  mainContent.innerHTML = `
+    <div class="min-h-screen bg-raum-black">
+      <!-- Back Button -->
+      <div class="px-4 md:px-8 py-4 border-b border-raum-border">
+        <button onclick="navigateToCatalog()" class="flex items-center space-x-2 text-neutral-400 hover:text-white transition-colors text-xs uppercase tracking-wider">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
+          <span>Back to Catalog</span>
+        </button>
+      </div>
+
+      <!-- Product Detail Content -->
+      <div class="flex flex-col lg:flex-row">
+
+        <!-- Left: Image -->
+        <div class="w-full lg:w-2/3 bg-neutral-800 relative group" style="min-height: 80vh;">
+          <img
+            src="${product.image}"
+            alt="${product.name}"
+            class="w-full h-full object-cover"
+          />
+          <!-- Navigation Arrows -->
+          <button class="absolute left-4 top-1/2 -translate-y-1/2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+            ${Icons.ArrowLeft}
+          </button>
+          <button class="absolute right-4 top-1/2 -translate-y-1/2 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+            ${Icons.ArrowRight}
+          </button>
+        </div>
+
+        <!-- Right: Details & Purchase -->
+        <div class="w-full lg:w-1/3 p-8 flex flex-col">
+          <!-- Product Info -->
+          <div class="mb-6">
+            <h1 class="text-3xl uppercase font-bold mb-2 tracking-tighter">${product.name}</h1>
+            <p class="text-xl">$${product.price.toFixed(2)}</p>
+          </div>
+
+          <!-- Category -->
+          <div class="text-xs text-neutral-500 uppercase mb-6">
+            <span>${product.category}</span>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-6 text-sm text-neutral-300">
+            <h3 class="text-[10px] uppercase text-neutral-500 mb-2 tracking-widest">Details</h3>
+            <p>${product.description || 'Premium quality fashion item.'}</p>
+          </div>
+
+          <!-- Color Selection -->
+          <div class="mb-6">
+            <h3 class="text-[10px] uppercase text-neutral-500 mb-2 tracking-widest">Color: <span class="text-white">Black</span></h3>
+            <div class="w-6 h-6 border border-white bg-black cursor-pointer"></div>
+          </div>
+
+          <!-- Size Selection -->
+          <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-[10px] uppercase text-neutral-500 tracking-widest">Select a size:</h3>
+              <span class="text-[10px] underline text-neutral-500 cursor-pointer">Size guide</span>
+            </div>
+            <div class="flex justify-between space-x-2" id="size-selector-${product.id}">
+              ${SIZES.map(size => `
+                <button
+                  onclick="selectSize('${product.id}', '${size}')"
+                  data-size="${size}"
+                  class="size-btn h-8 flex-1 text-xs border border-transparent hover:border-neutral-600 text-neutral-500 transition-colors"
+                >
+                  ${size}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="space-y-3 mt-auto">
+            <button
+              id="add-to-cart-btn-${product.id}"
+              onclick="handleAddToCartFromProduct('${product.id}')"
+              disabled
+              class="w-full bg-white text-black py-4 uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Select Size
+            </button>
+            <button class="w-full border border-raum-border text-white py-4 uppercase font-bold tracking-widest hover:border-white transition-colors flex justify-center items-center space-x-2">
+              <span>Add to Wishlist</span>
+              ${Icons.Heart}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  window.scrollTo(0, 0);
+}
+
+function selectSize(productId, size) {
+  AppState.selectedSizeInModal = size;
+
+  // Update size button styles
+  const sizeButtons = document.querySelectorAll(`#size-selector-${productId} .size-btn`);
+  sizeButtons.forEach(btn => {
+    if (btn.dataset.size === size) {
+      btn.classList.add('border-white', 'bg-white', 'text-black');
+      btn.classList.remove('border-transparent', 'text-neutral-500');
+    } else {
+      btn.classList.remove('border-white', 'bg-white', 'text-black');
+      btn.classList.add('border-transparent', 'text-neutral-500');
+    }
+  });
+
+  // Enable "Add to Cart" button
+  const addBtn = document.getElementById(`add-to-cart-btn-${productId}`);
+  addBtn.disabled = false;
+  addBtn.textContent = 'Add to Bag';
+}
+
+function handleAddToCartFromProduct(productId) {
+  if (!AppState.selectedSizeInModal) return;
+
+  const product = PRODUCTS.find(p => p.id === productId);
+  addToCart(product, AppState.selectedSizeInModal);
+  // Stay on product page, cart drawer will open automatically via addToCart
+}
+
+// ============================================
+// 7. ФУНКЦИИ UI - CART DRAWER
+// ============================================
+
+function renderCartDrawer() {
+  const cartDrawer = document.getElementById('cart-drawer');
+  const isOpen = AppState.isCartOpen;
+  const items = AppState.cart;
+  const subtotal = getCartSubtotal();
+
+  if (!isOpen) {
+    cartDrawer.innerHTML = '';
+    return;
+  }
+
+  cartDrawer.innerHTML = `
+    <!-- Backdrop -->
+    <div
+      class="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm transition-opacity"
+      onclick="closeCart()"
+    ></div>
+
+    <!-- Drawer -->
+    <div class="fixed inset-y-0 right-0 w-full max-w-md bg-raum-black border-l border-raum-border z-50 flex flex-col shadow-2xl">
+      <!-- Header -->
+      <div class="h-16 flex items-center justify-between px-6 border-b border-raum-border">
+        <h2 class="text-xl uppercase tracking-wide">Your Bag <span class="text-sm align-top text-neutral-400">[${items.length}]</span></h2>
+        <button onclick="closeCart()" class="flex items-center text-xs uppercase tracking-widest hover:text-neutral-400">
+          Close ${Icons.X}
+        </button>
+      </div>
+
+      <!-- Items -->
+      <div class="flex-1 overflow-y-auto">
+        ${items.length === 0 ? `
+          <div class="h-full flex flex-col items-center justify-center text-neutral-500">
+            <p>Your bag is empty.</p>
+          </div>
+        ` : `
+          <div class="divide-y divide-raum-border">
+            ${items.map(item => renderCartItem(item)).join('')}
+          </div>
+        `}
+      </div>
+
+      <!-- Footer -->
+      <div class="p-6 border-t border-raum-border bg-raum-black">
+        <div class="flex justify-between items-center mb-2">
+          <span class="uppercase text-sm tracking-wider">Subtotal:</span>
+          <span class="text-lg font-bold">$${subtotal.toFixed(2)}</span>
+        </div>
+        <p class="text-[10px] text-neutral-500 mb-6">Taxes and shipping calculated at checkout</p>
+        <button class="w-full bg-white text-black py-4 uppercase font-bold tracking-widest hover:bg-neutral-200 transition-colors text-sm">
+          Checkout
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCartItem(item) {
+  return `
+    <div class="p-6 flex space-x-4">
+      <div class="w-24 h-32 bg-neutral-800 overflow-hidden shrink-0">
+        <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover" />
+      </div>
+      <div class="flex-1 flex flex-col justify-between">
+        <div>
+          <div class="flex justify-between items-start">
+            <h3 class="text-sm font-bold uppercase w-3/4">${item.name}</h3>
+            <span class="text-sm">$${item.price.toFixed(2)}</span>
+          </div>
+          <div class="mt-2 text-xs text-neutral-400 uppercase space-y-1">
+            <p>Size: <span class="text-white">${item.selectedSize}</span></p>
+            <p>Colour: <span class="text-white">Black</span></p>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center mt-4">
+          <div class="flex items-center border border-raum-border px-2 py-1 space-x-4">
+            <button
+              onclick="updateQuantity('${item.id}', '${item.selectedSize}', -1)"
+              ${item.quantity <= 1 ? 'disabled' : ''}
+              class="hover:text-white text-neutral-500 disabled:opacity-30"
+            >
+              ${Icons.Minus}
+            </button>
+            <span class="text-xs w-4 text-center">${item.quantity}</span>
+            <button
+              onclick="updateQuantity('${item.id}', '${item.selectedSize}', 1)"
+              class="hover:text-white text-neutral-500"
+            >
+              ${Icons.Plus}
+            </button>
+          </div>
+          <button
+            onclick="removeFromCart('${item.id}', '${item.selectedSize}')"
+            class="text-[10px] uppercase border-b border-transparent hover:border-white transition-colors text-neutral-500 hover:text-white"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function openCart() {
+  AppState.isCartOpen = true;
+  renderCartDrawer();
+}
+
+function closeCart() {
+  AppState.isCartOpen = false;
+  renderCartDrawer();
+}
+
+function updateCartUI() {
+  renderNavbar();
+  renderCartDrawer();
+}
+
+// ============================================
+// 8. ФУНКЦИИ UI - FOOTER
+// ============================================
+
+function renderFooter() {
+  const footer = document.getElementById('footer');
+
+  footer.innerHTML = `
+    <div class="bg-raum-black text-white border-t border-raum-border">
+      <div class="flex flex-col md:flex-row border-b border-raum-border">
+        <!-- Newsletter Section -->
+        <div class="w-full md:w-1/2 p-8 md:p-12 border-b md:border-b-0 md:border-r border-raum-border">
+          <h3 class="text-xl md:text-2xl mb-4 font-light leading-tight">
+            Stay informed of our newest arrivals, trends,<br/>and promotions.
+          </h3>
+          <div class="mt-8 flex border-b border-neutral-600 pb-2">
+            <input
+              type="email"
+              placeholder="Enter e-mail address"
+              class="bg-transparent w-full outline-none text-sm placeholder-neutral-500 uppercase tracking-wide"
+            />
+            <button class="uppercase text-sm tracking-widest font-bold whitespace-nowrap hover:text-neutral-400">Sign Up</button>
+          </div>
+          <div class="mt-4 flex items-center space-x-2">
+            <input type="checkbox" id="terms" class="accent-white" />
+            <label for="terms" class="text-[10px] text-neutral-400 uppercase">I have read and accepted the <span class="underline cursor-pointer">Terms and Conditions</span> and <span class="underline cursor-pointer">Privacy Policy</span>.</label>
+          </div>
+        </div>
+
+        <!-- Links Section -->
+        <div class="w-full md:w-1/2 flex">
+          <div class="w-1/3 p-8 md:p-12 border-r border-raum-border">
+            <h4 class="text-[10px] uppercase text-neutral-500 mb-4 tracking-widest">Menu</h4>
+            <ul class="space-y-2 text-sm text-neutral-300">
+              <li class="cursor-pointer hover:text-white">Collections</li>
+              <li class="cursor-pointer hover:text-white">About</li>
+              <li class="cursor-pointer hover:text-white">Contact</li>
+            </ul>
+            <div class="mt-12">
+              <span class="text-[10px] text-neutral-500 uppercase cursor-pointer hover:text-white">Terms & Conditions</span>
+            </div>
+          </div>
+          <div class="w-1/3 p-8 md:p-12 border-r border-raum-border">
+            <h4 class="text-[10px] uppercase text-neutral-500 mb-4 tracking-widest">Service</h4>
+            <ul class="space-y-2 text-sm text-neutral-300">
+              <li class="cursor-pointer hover:text-white">Shipping</li>
+              <li class="cursor-pointer hover:text-white">Returns</li>
+              <li class="cursor-pointer hover:text-white">FAQ</li>
+            </ul>
+          </div>
+          <div class="w-1/3 p-8 md:p-12">
+            <h4 class="text-[10px] uppercase text-neutral-500 mb-4 tracking-widest">Service</h4>
+            <ul class="space-y-2 text-sm text-neutral-300">
+              <li class="cursor-pointer hover:text-white">Instagram</li>
+              <li class="cursor-pointer hover:text-white">Facebook</li>
+            </ul>
+            <div class="mt-12">
+              <span class="text-[10px] text-neutral-500 uppercase cursor-pointer hover:text-white">Privacy Policy</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Huge Logo -->
+      <div class="w-full overflow-hidden leading-none">
+        <h1 class="text-[18vw] font-bold tracking-tighter text-white text-center leading-[0.8]">
+          RAÚM
+        </h1>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================
+// 9. УТИЛИТЫ - ФИЛЬТРАЦИЯ И ПОИСК
+// ============================================
+
+function getFilteredProducts() {
+  let filtered = PRODUCTS;
+
+  // Filter by category
+  if (AppState.currentFilter !== 'All') {
+    filtered = filtered.filter(p => p.category === AppState.currentFilter);
+  }
+
+  // Search
+  if (AppState.searchQuery) {
+    filtered = filtered.filter(p =>
+      p.name.toLowerCase().includes(AppState.searchQuery.toLowerCase()) ||
+      p.category.toLowerCase().includes(AppState.searchQuery.toLowerCase())
+    );
+  }
+
+  return filtered;
+}
+
+function setFilter(category) {
+  AppState.currentFilter = category;
+  renderCatalog();
+}
+
+function handleSearch() {
+  const query = prompt('Search for products:');
+  if (query !== null) {
+    AppState.searchQuery = query;
+    renderCatalog();
+  }
+}
+
+function navigateHome(e) {
+  e.preventDefault();
+  navigateToCatalog();
+}
+
+// ============================================
+// ROUTING & NAVIGATION
+// ============================================
+
+function navigateToProduct(productId) {
+  window.location.hash = `#/product/${productId}`;
+}
+
+function navigateToCatalog() {
+  window.location.hash = '#/';
+}
+
+function handleRoute() {
+  const hash = window.location.hash;
+
+  // Parse hash route
+  if (hash.startsWith('#/product/')) {
+    const productId = hash.replace('#/product/', '');
+    AppState.currentRoute = 'product';
+    AppState.currentProductId = productId;
+    renderProductPage(productId);
+  } else {
+    AppState.currentRoute = 'catalog';
+    AppState.currentProductId = null;
+    AppState.currentFilter = 'All';
+    AppState.searchQuery = '';
+    renderCatalog();
+  }
+
+  renderNavbar();
+  renderFooter();
+}
+
+// Listen to hash changes for routing
+window.addEventListener('hashchange', handleRoute);
+
+// ============================================
+// 10. KEYBOARD СОБЫТИЯ
+// ============================================
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (AppState.isCartOpen) {
+      closeCart();
+    } else if (AppState.currentRoute === 'product') {
+      navigateToCatalog();
+    }
+  }
+});
+
+// ============================================
+// 11. ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ
+// ============================================
+
+function initApp() {
+  loadCartFromStorage();
+  handleRoute(); // Initialize routing
+  renderCartDrawer();
+}
+
+// Запуск при загрузке страницы
+document.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

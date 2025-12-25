@@ -1,0 +1,65 @@
+<div
+  x-show="searchOpen"
+  x-cloak
+  @keydown.escape.window="searchOpen = false"
+  class="fixed inset-0 z-50 flex items-start justify-center pt-16 md:pt-24"
+  style="display: none;"
+>
+  <div
+    @click="searchOpen = false"
+    class="absolute inset-0 bg-black/80 modal-backdrop"
+  ></div>
+
+  <div
+    class="relative w-full max-w-3xl mx-4 bg-raum-dark border border-raum-border rounded-lg modal-content overflow-hidden"
+  >
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-medium uppercase tracking-wider">Search</h2>
+        <button
+          @click="searchOpen = false"
+          class="text-neutral-400 hover:text-white transition-colors"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="mb-6">
+        <input
+          type="text"
+          name="q"
+          placeholder="Search products..."
+          autocomplete="off"
+          class="w-full bg-raum-black border border-raum-border text-white px-4 py-3 rounded focus:outline-none focus:border-white transition-colors"
+          hx-get="{% url 'catalog:search_products' %}"
+          hx-trigger="keyup changed delay:300ms"
+          hx-target="#search-results"
+          hx-indicator="#search-loading"
+        />
+      </div>
+
+      <div id="search-loading" class="htmx-indicator text-center py-8 text-neutral-400">
+        <svg class="animate-spin h-8 w-8 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+
+      <div id="search-results" class="max-h-96 overflow-y-auto">
+      </div>
+    </div>
+  </div>
+</div>
